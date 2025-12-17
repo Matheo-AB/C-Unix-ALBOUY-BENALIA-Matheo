@@ -70,9 +70,3 @@ Différence : 1085974523
 Valeur attendue : 11111100
 Résultat final : 11111100
 Différence : 0
-
-1) 
-
-## Réponse aux questions. (PARTIE 3)
-
-1) 
