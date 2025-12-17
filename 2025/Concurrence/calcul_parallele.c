@@ -13,6 +13,7 @@ typedef struct
         int valeur;
         int multiplicateur;
         int index;
+        long resultat;
     } args_t;
 
 void* calcul_thread(void* arg)
@@ -22,54 +23,57 @@ void* calcul_thread(void* arg)
         // vous notifié au compilateur "cette" address dois être considéré comme args_t
         args_t* args = (args_t*)arg;
         // vous pouvez accéder (read/write) a toutes les variables via `args->`
+        args->resultat = (long)args->valeur * args->multiplicateur;
+
         return NULL;
     }
 
 int main(void)
-    {
-        printf("=== Calcul Parallèle ===\n");
+        {
+            printf("=== Calcul Parallèle ===\n");
+            struct timespec debut, fin;
+            clock_gettime(CLOCK_MONOTONIC, &debut);
 
-        struct timespec debut, fin;
-        clock_gettime(CLOCK_MONOTONIC, &debut);
-        // TODO: Créer un tableau de pthread_t
-        args_t thread_args[10];
+            
+            pthread_t threads[TAILLE_DONNEES];
+            
+            //TODO Tableau des arguments
+            args_t thread_args[TAILLE_DONNEES];
 
-        // TODO: Créer un tableau de structures d'arguments
-        for (int i = 0; i < 10; i++)
-            {
-                thread_args[i].index = i;
-                thread_args[i].valeur = i + 1;
-            }
-                // TODO: Créer et démarrer tous les threads
+            //TODO Création des threads
+            for (int i = 0; i < TAILLE_DONNEES; i++)
+                {
+                    // Préparation des données
+                    thread_args[i].index = i;
+                    thread_args[i].valeur = DONNEES[i];
+                    thread_args[i].multiplicateur = MULTIPLICATEUR;
 
-        // TODO : Créer tous les threads
-        for (int i = 0; i < 10; i++)
-            {
-                    // 1. On prépare les données pour le thread i
-                thread_args[i].index = i;
-                thread_args[i].valeur = i + 1; // Exemple de donnée à traiter
+                    if (pthread_create(&threads[i], NULL, calcul_thread, (void*)&thread_args[i]) != 0)
+                        {
+                            perror("Erreur création thread");
+                            return 1;
+                        }
+                }
 
-                pthread_create(&thread_args[i], NULL, calcul_thread, (void*)&thread_args[i]);
-            }
-        // TODO: Attendre tous les threads
-        for (int i = 0; i < 10; i++)
-            {
-                pthread_join(thread_args[i], NULL); 
-            }
-        // TODO: Agréger les résultats
+            //TODO Attente des threads
+            for (int i = 0; i < TAILLE_DONNEES; i++)
+                {
+                    pthread_join(threads[i], NULL);
+                }
 
-        int somme_total = 0;
-        for (int i = 0; i < 10; i++)
-            {
-                somme_total += thread_args[i].resultat;
-            }
-    
-    
-        clock_gettime(CLOCK_MONOTONIC, &fin);
-        long duree = (fin.tv_sec - debut.tv_sec) * 1000 + (fin.tv_nsec - debut.tv_nsec) / 1000000;
+            // TODO: Agréger les résultats
+            long somme_total = 0; 
+            for (int i = 0; i < TAILLE_DONNEES; i++)
+                {
+                    somme_total += thread_args[i].resultat;
+                }
 
-        printf("Résultat total : %ld\n", somme_total);
-        printf("Durée : %ld ms\n", duree);
+            clock_gettime(CLOCK_MONOTONIC, &fin);
+            
+            long duree = (fin.tv_sec - debut.tv_sec) * 1000 + (fin.tv_nsec - debut.tv_nsec) / 1000000;
 
-        return 0;
+            printf("Résultat total : %ld\n", somme_total);
+            printf("Durée : %ld ms\n", duree);
+
+            return 0;
     }
